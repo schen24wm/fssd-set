@@ -58,7 +58,7 @@ Rerun `fssd_main.sh` at the `Stage2/` directory. Note that following the SET app
 
 ## Expected behavior
 
-In stage 1, with the preset parameters, the convergence should be identified around (`N` in Appendix E of the paper) step 55 and should be reached around (`m` in Appendix E of the paper) step 25\~30.
+In stage 1, with the preset parameters, the convergence should be identified around (`N` in Appendix E of the paper) step 50\~55 and should be reached around (`m` in Appendix E of the paper) step 25\~30.
 
 The `POSFILE_final` in stage 1 should match with `demo/POSFILE_Si-betatin` with very small fluctuations (max crystal coordinate deviation \~ 0.01).
 
