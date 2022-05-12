@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ $# -ge 1 ] && [ $1 = "-werr" ] ;then # add zero error bar
+  tailat 'Forces acting on atoms' -E 'The non-local contrib' *SCF*out | awk 'NF>0{printf "%s   ,err =    0.00000000    0.00000000    0.00000000\n",$0}'
+else
+  tailat 'Forces acting on atoms' -E 'The non-local contrib' *SCF*out | awk 'NF>0'
+fi

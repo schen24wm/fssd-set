@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# COLUMN-A "   1    2   3    4     5     *  7      8      9        10   * 12     13     14 "
+# FORMAT "     atom %4d type %2d   force =  %13.8f %13.8f %13.8f   ,err = %13.8f %13.8f %13.8f\n" % ( atom_acc, species_acc, forcex, forcey, forcez, errx, erry, errz )
+# COLUMN-B "   15   16  17   18    19    *  21     22     23       24   * 26     27     28 "
+
+if [ $# -gt 1 ] && [ $1 = "-hp" ] ; then
+  hp=1
+  shift
+else
+  hp=0
+fi
+
+if [ $# -ne 3 ] ; then
+  echo >&2 "Usage :   $0 [-hp] -add  FILE1 FILE2"
+  echo >&2 "   .OR.   $0 [-hp] -diff FILE1 FILE2"
+  echo >&2 "   .OR.   $0 [-hp] -mult multiplier FILE"
+  echo >&2 "-hp for high-precision output."
+  echo >&2 "File(s) need to have force & err on 3 Cartesian directions."
+  echo >&2 "Please make sure atom (type) match! Otherwise program will exit!"
+  exit 1
+else
+  op=$1
+  f1=$2
+  f2=$3
+  if [ ${op} = "-add" ] || [ ${op} = "-diff" ] ; then
+    if [ ! -f ${f1} ] || [ ! -f ${f2} ] ; then
+      echo >&2 "ERR: Not both file exists."
+      exit 1
+    fi
+    paste -d ' ' ${f1} ${f2} | awk -v "hp=${hp}" -v "op=${op}" 'function ssqrt(x){if(x>-1E-4&&x<0) return 0;else return sqrt(x);} BEGIN{ totcol=14; atcol=2; speccol=4; fcol=7; ecol=12; }  #change these if necessary
+    {
+      if ( $(atcol) != $(atcol+totcol) || $(speccol) != $(speccol+totcol) ) {
+        print "[AWK ERROR] Atom/type does not match, or file format corrupted!" > "/dev/stderr";
+        exit;
+      }
+      f_a_x=$(fcol);
+      f_a_y=$(fcol+1);
+      f_a_z=$(fcol+2);
+      e_a_x=$(ecol);
+      e_a_y=$(ecol+1);
+      e_a_z=$(ecol+2);
+      f_b_x=$(totcol+fcol);
+      f_b_y=$(totcol+fcol+1);
+      f_b_z=$(totcol+fcol+2);
+      e_b_x=$(totcol+ecol);
+      e_b_y=$(totcol+ecol+1);
+      e_b_z=$(totcol+ecol+2);
+      if (op=="-add") {
+        f_x=f_a_x+f_b_x;           f_y=f_a_y+f_b_y;           f_z=f_a_z+f_b_z;
+        e_x=ssqrt(e_a_x^2+e_b_x^2); e_y=ssqrt(e_a_y^2+e_b_y^2); e_z=ssqrt(e_a_z^2+e_b_z^2);
+      } else if (op=="-diff") {
+        f_x=f_a_x-f_b_x;           f_y=f_a_y-f_b_y;           f_z=f_a_z-f_b_z;
+        e_x=ssqrt(e_a_x^2+e_b_x^2); e_y=ssqrt(e_a_y^2+e_b_y^2); e_z=ssqrt(e_a_z^2+e_b_z^2);
+      }
+      
+      if (hp==0) 
+        printf "     atom %4d type %2d   force =  %13.8f %13.8f %13.8f   ,err = %13.8f %13.8f %13.8f\n",  $(atcol), $(speccol), f_x, f_y, f_z, e_x, e_y, e_z;
+      else
+        printf "     atom %4d type %2d   force =  %27.16f %27.16f %27.16f   ,err = %27.16f %27.16f %27.16f\n",  $(atcol), $(speccol), f_x, f_y, f_z, e_x, e_y, e_z;
+
+    }'
+  elif [ ${op} = "-mult" ] ; then
+    f0=${f2}
+    mp=${f1}
+    if [ ! -f ${f0} ] ; then
+      echo >&2 "ERR: File ${f0} does not exist."
+      exit 1
+    fi
+    cat ${f0} | awk -v "hp=${hp}" -v "mp=${mp}" 'BEGIN{ totcol=14; atcol=2; speccol=4; fcol=7; ecol=12; }  #change these if necessary
+    {
+      f_x=$(fcol);
+      f_y=$(fcol+1);
+      f_z=$(fcol+2);
+      e_x=$(ecol);
+      e_y=$(ecol+1);
+      e_z=$(ecol+2);
+      if(mp<0) mpe=-mp; else mpe=mp;
+      
+      if (hp==0)  
+        printf "     atom %4d type %2d   force =  %13.8f %13.8f %13.8f   ,err = %13.8f %13.8f %13.8f\n",  $(atcol), $(speccol), f_x*mp, f_y*mp, f_z*mp, e_x*mpe, e_y*mpe, e_z*mpe;
+      else
+        printf "     atom %4d type %2d   force =  %27.16f %27.16f %27.16f   ,err = %27.16f %27.16f %27.16f\n", $(atcol), $(speccol), f_x*mp, f_y*mp, f_z*mp, e_x*mpe, e_y*mpe, e_z*mpe;
+    }'
+  else
+    echo >&2 "ERR: Unknown operator."
+    exit 1
+  fi
+fi

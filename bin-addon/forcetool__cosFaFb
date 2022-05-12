@@ -1,0 +1,94 @@
+#!/usr/bin/env python2
+
+# This program evaluates the force angle between two forces, using
+#                          Sum_i^{atoms*dim(3)} F_a (i) . F_b (i)
+# cos( Arg{F_a,F_b} ) = -------------------------------------------
+#                                   | F_a | . | F_b |
+# where | F | = sqrt( Sum_i^{atoms*dim(3)} F(i)^2 )
+
+# Error bar evaluation formula:
+# FROM   \delta cosArg = (1/N_a/N_b) \delta M - (M/N_a^2/N_b) \delta N_a - (M/N_a/N_b^2) \delta N_b,
+# WHERE  N_a = | F_a |, N_b = | F_b |, M = Sum_i^{atoms*dim(3)} F_a (i) . F_b (i),
+# SINCE  \delta M = Sum_i^{atoms*dim(3)} [ F_a (i) \delta F_b (i) + F_b (i)  \delta F_a (i) ]
+# AND    \delta N = Sum_i^{atoms*dim(3)} [ F (i) / N * \delta F (i) ],
+# WE CAN EXPRESS \delta cosArg IN \delta F_a (i) AND \delta F_b (i) LINEARLY, LIKE:
+#        \delta cosArg = Sum_i^{atoms*dim(3)} [ C_a (i) * \delta F_a (i) + C_b (i) * \delta F_b (i) ]
+# WHERE  C_a (i) = F_b(i)/N_a/N_b - F_a(i)*M/N_a^3/N_b, C_b (i) = F_a(i)/N_a/N_b - F_b(i)*M/N_a/N_b^3
+# NOW FROM THE ERROR BAR FORMULA, ERROR BAR OF cosArg IS:
+#        error(cosArg) = sqrt( Sum_i^{atoms*dim(3)} [ (C_a (i) * error(F_a(i)))**2 + (C_b (i) * error(F_b(i)))**2 ] )
+
+# We only draw out an estimate for error bar of Arg:
+#   Arg = arccos (cosArg)
+#   \delta Arg = -1/sqrt(1-cosArg^2) \delta cosArg
+#   ... and for simplicity we just change \delta to Err and add an abs()
+
+# need input file type: forcetool_F1 file (use forcetool__F1 to generate)
+# you can choose single atom
+
+import os,sys
+import math as M
+import numpy as np
+
+def ssqrt(x):  #"Safe" square root
+  if x > -1.0E-4 and x < 0.0:
+    return 0.0
+  else:
+    return M.sqrt(x)
+
+if len(sys.argv) < 3 or len(sys.argv) > 4:
+  sys.stderr.write('Usage: forcetool__cosFaFb  <FORCE1A>  <FORCE1B>  [ATOM#]\n')
+  sys.stderr.write('FORCE1A and FORCE1B are forcetool_F1 files generated with forcetool__F1 (with or without header is OK)\n')
+  sys.stderr.write('if ATOM# is specified, only calculate force for a single atom (ATOM# starts from 1)\n')
+else:
+  F1a=open(sys.argv[1],'r')
+  F1b=open(sys.argv[2],'r')
+  try:
+    lbeg=int(sys.argv[3])*3-3
+    lend=int(sys.argv[3])*3
+    F1alines=F1a.readlines()[lbeg:lend]
+    F1blines=F1b.readlines()[lbeg:lend]
+  except:
+    F1alines=F1a.readlines()
+    F1blines=F1b.readlines()
+  if len(F1alines) != len(F1blines):
+    raise Exception('FORCE1A and FORCE1B file length does not match!\n')
+
+  totlines = len(F1alines)
+  Fa = np.zeros(totlines)
+  Fb = np.zeros(totlines)
+  Ea = np.zeros(totlines)
+  Eb = np.zeros(totlines)
+  for iline in range(totlines):
+    la = F1alines[iline].split()
+    lb = F1blines[iline].split()
+    Fa[iline] = float(la[-2])
+    Ea[iline] = float(la[-1])
+    Fb[iline] = float(lb[-2])
+    Eb[iline] = float(lb[-1])
+  FaFb = sum(Fa[:]*Fb[:])           # "M"
+  NFa  = ssqrt(sum(Fa[:]*Fa[:]))   # "N_a"
+  NFb  = ssqrt(sum(Fb[:]*Fb[:]))   # "N_b"
+  cosArg = FaFb/NFa/NFb
+
+
+  Ca = np.zeros(totlines)
+  Cb = np.zeros(totlines)
+  for iline in range(totlines):
+    Ca[iline] = Fb[iline] / NFa / NFb - Fa[iline] * FaFb / NFa**3 / NFb
+    Cb[iline] = Fa[iline] / NFa / NFb - Fb[iline] * FaFb / NFa / NFb**3
+
+  EcosArg = 0.0
+  for iline in range(totlines):
+    EcosArg += ( Ca[iline] * Ea[iline] ) ** 2 
+    EcosArg += ( Cb[iline] * Eb[iline] ) ** 2
+  EcosArg = ssqrt(EcosArg)
+
+  print '| F_a |   = %14.8f, | F_b |           = %14.8f' % (NFa, NFb)
+  print 'F_a . F_b = %14.8f, | F_b | / | F_a | = %14.8f %%' % (FaFb, 100.0*NFb/NFa)
+  if sys.argv[1] == sys.argv[2]:  # Same file, calculating Arg might result in error
+    print 'cosArg    = %14.8f with error         = %14.8f' % (1.0, 0.0)
+    print 'Arg       = %14.8f degrees with error ~ %14.8f degrees' % (0.0, 0.0)
+  else:
+    print 'cosArg    = %14.8f with error         = %14.8f' % (cosArg, EcosArg)
+    print 'Arg       = %14.8f degrees with error ~ %14.8f degrees' % (180.0/M.pi*M.acos(cosArg), 180.0/M.pi*abs(-1.0/ssqrt(1.0-cosArg**2)*EcosArg) )
+ 

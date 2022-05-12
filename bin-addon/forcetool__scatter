@@ -1,0 +1,43 @@
+#!/bin/bash
+# using ${SYSTMP}/.forcetool.tmprand.$$
+
+if [ $# -ne 3 ] ; then
+  echo >&2 "Usage: forcetool__scatter IN_FORCE amplitude OUT_FORCE"
+  exit 0
+fi
+f_i=$1
+ampl=$2
+f_o=$3
+if [ ! -f ${f_i} ] ; then
+  echo >&2 "${f_i} does not exist!"
+  exit 1
+fi
+if [ -e ${f_o} ] ; then
+  echo >&2 "WARNING: ${f_o} exists! (WILL REPLACE)"
+  echo -e >&2 "CONTINUE? (y/n)    \c"
+  read yorn
+  if [ ${yorn} != 'y' ] && [ ${yorn} != 'Y' ] && [ ${yorn} != 'yes' ] && [ ${yorn} != 'Yes' ] && [ ${yorn} != 'YES' ] ; then
+    exit 0 
+  fi
+fi
+
+cat ${f_i} | awk -v "seed=$RANDOM" -v "ampl=${ampl}" 'function ssqrt(x){if(x>-1E-4&&x<0) return 0;else return sqrt(x);} 
+BEGIN{ srand(seed); tpi=2.0*atan2(0,-1);   totcol=14; atcol=2; speccol=4; fcol=7; ecol=12; }  #change these if necessary
+{
+  r1=rand();
+  r2=rand();
+  r3=rand();
+  r4=rand();
+  r5=rand();
+  r6=rand();
+  rx=ampl*ssqrt(-2.0*log(r1))*cos(tpi*r2);
+  ry=ampl*ssqrt(-2.0*log(r3))*cos(tpi*r4);
+  rz=ampl*ssqrt(-2.0*log(r5))*cos(tpi*r6);
+  printf "     atom %4d type %2d   force =  %13.8f %13.8f %13.8f   ,err = %13.8f %13.8f %13.8f\n",  $(atcol), $(speccol), rx, ry, rz, 0, 0, 0;
+}' > ${SYSTMP}/.forcetool.tmprand.$$
+
+echo >&2 "Input force file:" ${f_i}
+echo >&2 "Random gaussian noise amplitude:" ${ampl}
+echo >&2 "Output force file :" ${f_o}
+forcetool__corr -add ${f_i} ${SYSTMP}/.forcetool.tmprand.$$ > ${f_o}
+rm ${SYSTMP}/.forcetool.tmprand.$$

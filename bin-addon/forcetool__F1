@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# This changes forcetool format from (N_atom,dim(3)) matrix into (N_atom,dim(3)) array
+# header is actually a first column for plots
+
+if [ $# -eq 0 ] ; then
+  echo >&2 "Usage: forcetool__F1 [-2F] <FORCEFILE> [HEADER]"
+  echo >&2 "  -2F       Automatically print to a *.F1 file."
+  echo >&2 "  HEADER    Paste content in HEADER in front of EACH output line."
+elif [ $# -eq 1 ] && [ $1 = "--help" ] ; then
+  echo >&2 "Usage: forcetool__F1 [-2F] <FORCEFILE> [HEADER]"
+  echo >&2 "  -2F       Automatically print to a *.F1 file."
+  echo >&2 "  HEADER    Paste content in HEADER in front of EACH output line."
+else
+  if [ $1 = "-2F" ] ; then # print to .F1 file
+    outf='.F1'
+    shift
+  fi
+  if [ ! -f $1 ] ; then
+    echo >&2 "ERROR: FORCEFILE $1 does not exist!"
+    exit 1
+  fi
+  forcef=$1
+  if [ $# -eq 2 ] ; then
+    if [ ! -f $2 ] ; then
+      echo >&2 "WARNING: HEADER $2 does not exist (will not use)!"
+    else
+      headerf=$2
+    fi
+  fi
+  if [ -z ${headerf} ] ; then
+    if [ -z ${outf} ]  ; then
+      awk '{printf "%12.8f %12.8f\n%12.8f %12.8f\n%12.8f %12.8f\n",$7,$12,$8,$13,$9,$14;}' ${forcef}
+    else
+      awk '{printf "%12.8f %12.8f\n%12.8f %12.8f\n%12.8f %12.8f\n",$7,$12,$8,$13,$9,$14;}' ${forcef} > ${forcef%\.force}.F1
+      echo >&2 "Output to: ${forcef%\.force}.F1"
+    fi
+  else
+    if [ -z ${outf} ]  ; then
+      awk '{printf "%12.8f %12.8f\n%12.8f %12.8f\n%12.8f %12.8f\n",$7,$12,$8,$13,$9,$14;}' ${forcef} | paste -d ' ' ${headerf} -
+    else
+      awk '{printf "%12.8f %12.8f\n%12.8f %12.8f\n%12.8f %12.8f\n",$7,$12,$8,$13,$9,$14;}' ${forcef} | paste -d ' ' ${headerf} - > ${forcef%\.force}.F1
+      echo >&2 "Output to: ${forcef%\.force}.F1"
+    fi
+  fi
+fi

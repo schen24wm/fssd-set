@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# A small wrapper for forcetool__F1 $1> .F1 ; forcetool__cosFaFb .F1 .F1
+# WARNING: do not use on .F1 file
+
+if [ $# -lt 1 ] || [ ! -f $1 ] ; then
+  echo >&2 "Usage: forcetool__norm <FORCEFILE>"
+else
+  forcetool__F1 $1 > ${SYSTMP}/.forcetool.normF1.$$
+  normF1=${SYSTMP}/.forcetool.normF1.$$
+  forcetool__cosFaFb ${normF1} ${normF1} | awk 'NR==1{print $NF}'
+  rm ${normF1}
+fi

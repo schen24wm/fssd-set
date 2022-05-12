@@ -1,0 +1,36 @@
+#!/bin/bash
+# using ${SYSTMP}/.forcetool.tmpmix0.$$ ${SYSTMP}/.forcetool.tmpmix1.$$ ${SYSTMP}/.forcetool.tmpmix2.$$
+
+if [ $# -lt 3 ] ; then
+  echo >&2 "Usage: forcetool__mixF total_wt <forcefile1> wt1 [ <forcefile2> wt2 [...] ]"
+  echo >&2
+  echo >&2 "  Output force = (1.0/total_wt) * ( wt1*force1 + wt2*force2 + ... )"
+  exit 0
+fi
+
+total_wt=$1
+final_mp=$( echo | awk '{print 1.0/'${total_wt}';}' )
+shift
+
+forcetool__corr -mult 0.0 $1 > ${SYSTMP}/.forcetool.tmpmix0.$$    #zero force
+
+iforce=1
+while [ $# -ge 1 ] ; do
+
+ffile=$1
+wt=$2
+
+forcetool__corr -mult ${wt} ${ffile} > ${SYSTMP}/.forcetool.tmpmix1.$$
+forcetool__corr -add  ${SYSTMP}/.forcetool.tmpmix0.$$ ${SYSTMP}/.forcetool.tmpmix1.$$ > ${SYSTMP}/.forcetool.tmpmix2.$$
+mv ${SYSTMP}/.forcetool.tmpmix2.$$  ${SYSTMP}/.forcetool.tmpmix0.$$
+
+echo >&2 "Force file #${iforce}:" ${ffile} "  Multiplier:" ${wt}
+iforce=$((iforce+1))
+
+shift
+shift
+done
+
+echo >&2 "Total multiplier:" ${total_wt} "  : the final force is divided by this at the end."
+forcetool__corr -mult ${final_mp} ${SYSTMP}/.forcetool.tmpmix0.$$
+rm -f ${SYSTMP}/.forcetool.tmpmix0.$$ ${SYSTMP}/.forcetool.tmpmix1.$$ ${SYSTMP}/.forcetool.tmpmix2.$$
