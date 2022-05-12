@@ -52,7 +52,7 @@ However, running with MPI and multiple processors is recommended, as the externa
 
 ## If a second stage is desired
 
-Copy the scripts in `main` to a directory for the second stage (e.g. `Stage2`). Copy `POSFILE_final` in stage 1 to e.g. `Stage2/Step0/`.
+Copy the scripts in `main` to a directory for the second stage (e.g. `Stage2/`). Copy `POSFILE_final` in stage 1 to e.g. `Stage2/Step0/`.
 
 Rerun `fssd_main.sh` at the `Stage2/` directory. Note that following the SET approach, you need to reduce the step size and noise size. For the latter, if you are doing a simulation, you can reduce the scale of the add-on Gaussian noise. If you are running with an actual noisy force program (e.g. PW-AFQMC), you need to change the amount of samples or computational time, so that the target error bar (computed from central limit theorem) reduce by the desired amount.
 
