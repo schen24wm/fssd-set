@@ -50,15 +50,15 @@ However, running with MPI and multiple processors is recommended, as the externa
 
 ## If a second stage is desired
 
-Copy the scripts in `main` to a directory for the second stage (e.g. `project/Stage2/`). Copy `POSFILE_final` in stage 1 to e.g. `project/Stage2/Step0/`.
+Copy the scripts in `main` to a directory for the second stage (e.g. `demo/Stage2/`). Copy `POSFILE_final` in stage 1 to e.g. `demo/Stage2/Step0/`.
 
-Rerun `fssd_main.sh` at the `project/Stage2/` directory. Note that following the SET approach, you need to reduce the step size and noise size. For the latter, if you are doing a simulation, you can reduce the scale of the add-on Gaussian noise. If you are running with an actual noisy force program (e.g. PW-AFQMC), you need to change the amount of samples or computational time, so that the target error bar (computed from central limit theorem) reduce by the desired amount.
+Rerun `fssd_main.sh` at the `demo/Stage2/` directory. Note that following the SET approach, you need to reduce the step size and noise size. For the latter, if you are doing a simulation, you can reduce the scale of the add-on Gaussian noise. If you are running with an actual noisy force program (e.g. PW-AFQMC), you need to change the amount of samples or computational time, so that the target error bar (computed from central limit theorem) reduce by the desired amount.
 
 ## Expected behavior
 
 In stage 1, with the preset parameters, the convergence should be identified around (`N` in Appendix E of the paper) step 50\~55 and should be reached around (`m` in Appendix E of the paper) step 25\~30.
 
-The `POSFILE_final` in stage 1 should match with `demo/POSFILE_Si-betatin` with very small fluctuations (max crystal coordinate deviation \~ 0.01).
+The `POSFILE_final` in stage 1 should match with `POSFILE_Si-betatin` with very small fluctuations (max crystal coordinate deviation \~ 0.01).
 
 If a stage 2 is run, this scale of fluctuation should be smaller than stage 1 (depending on the parameters chosen).
 
@@ -73,7 +73,7 @@ The corresponding Quantum Espresso run needs about 3 hours when run serially.
 
 To do optimizations with your own solid, make an initial position file with the same format and replace `POSFILE_Si-step0`. Please note that this position file is almost identical to VASP's POSCAR file, except that the lattice constant is in Bohr, not Angstrom. The atom positions are in crystal coordinates.
 
-Check all scripts in `project/` and `project/qedir_1proc_tmpl/`, to remove dependencies on the solid system (e.g. use of Si pseudopotential and lattice constants).
+Check all scripts in `demo/` and `demo/qedir_1proc_tmpl/`, to remove dependencies on the solid system (e.g. use of Si pseudopotential and lattice constants).
 
 ## Running with your own force code
 
