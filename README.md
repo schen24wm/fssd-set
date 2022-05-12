@@ -24,7 +24,7 @@ If using Quantum Espresso to simulate many-body forces (as in the demo),
 No actual installation is needed if the software requirement is met, but a few setup of the running environment are needed.
 
 - Scripts in `bin-addon/` needs to be added to a directory in `PATH` and be made executable.
-- Set the environment variable `SYSTMP` to an empty directory. This directory will store some (hidden) temporary files of the bin-addon/ scripts.
+- Set the environment variable `SYSTMP` to an empty directory. This directory will store some (hidden) temporary files of the `bin-addon/` scripts.
 
 The entire process can be done within 5 minutes.
 
@@ -54,7 +54,7 @@ However, running with MPI and multiple processors is recommended, as the externa
 
 Copy the scripts in `main` to a directory for the second stage (e.g. `project/Stage2/`). Copy `POSFILE_final` in stage 1 to e.g. `project/Stage2/Step0/`.
 
-Rerun `fssd_main.sh` at the `Stage2/` directory. Note that following the SET approach, you need to reduce the step size and noise size. For the latter, if you are doing a simulation, you can reduce the scale of the add-on Gaussian noise. If you are running with an actual noisy force program (e.g. PW-AFQMC), you need to change the amount of samples or computational time, so that the target error bar (computed from central limit theorem) reduce by the desired amount.
+Rerun `fssd_main.sh` at the `project/Stage2/` directory. Note that following the SET approach, you need to reduce the step size and noise size. For the latter, if you are doing a simulation, you can reduce the scale of the add-on Gaussian noise. If you are running with an actual noisy force program (e.g. PW-AFQMC), you need to change the amount of samples or computational time, so that the target error bar (computed from central limit theorem) reduce by the desired amount.
 
 ## Expected behavior
 
