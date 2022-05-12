@@ -36,9 +36,9 @@ In the `demo` directory, we provide a two-stage example of `FSSDxSET` in silicon
 
 Before running the demo, you should copy everything in `main` to a new empty directory (e.g. `project`).
 
-You also need to copy the initial position file (`demo/POSFILE_Si-step0`) to `project/Step0`.
+You also need to copy the initial position file (`demo/POSFILE_Si-step0`) to `project/Step0/`.
 
-To use Quantum Espresso, copy the directory `demo/qedir_1proc_tmpl` to `project` as well.
+To use Quantum Espresso, copy the directory `demo/qedir_1proc_tmpl` to `project/` as well.
 
 Tweak running parameters in `fssd_main.sh` and `geoopt_convergence_analysis.py` if needed.
 
