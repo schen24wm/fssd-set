@@ -77,6 +77,8 @@ To do optimizations with your own solid, make an initial position file with the 
 
 Check all scripts in `project/` and `project/qedir_1proc_tmpl/`, to remove dependencies on the solid system (e.g. use of Si pseudopotential and lattice constants).
 
+You might need to change the defaults of some free parameters for the most optimized performance.
+
 ## Running with your own force code
 
 To run with your own force code, pay attention to the force output format of the demo, e.g. `demo/step0_demo.force`. You need to format the force output of your force code to the same format to make the scripts usable.
