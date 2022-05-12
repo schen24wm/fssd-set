@@ -30,21 +30,19 @@ The entire process can be done within 5 minutes.
 
 # Demo
 
-In the `demo/` directory, we provide a two-stage example of `FSSDxSET` in silicon, based on the diamond to beta-tin phase transition example in our paper.
+In the `demo/` directory, we provide the diamond to beta-tin phase transition example in our paper.
+
+`POSFILE_Si-step0` provides an example input position file. `step0_demo.force` provides an example of the computed force at this position. `POSFILE_Si-step0` is the position file of the desired Si beta-tin structure. `qedir_1proc_tmpl/` is a directory that contains necessary inputs for Quantum Espresso. `calc_symmetry_dist_bSn.py` is a script that computes the distance to the beta-tin structure.
 
 ## Preparation
 
-Before running the demo, you should copy everything in `main/` to a new empty directory (e.g. `project/`).
-
-You also need to copy the initial position file (`demo/POSFILE_Si-step0`) to `project/Step0/`.
-
-To use Quantum Espresso, copy the directory `demo/qedir_1proc_tmpl` to `project/` as well.
+Before running the demo, you should copy everything in `main/` to `demo/`.
 
 Tweak running parameters in `fssd_main.sh` and `geoopt_convergence_analysis.py` if needed.
 
 ## Running
 
-To run the demo (first stage), in the `project/` directory, run
+To run the demo (first stage), in the `demo/` directory, run
 ```
 sh fssd_main.sh
 ```
