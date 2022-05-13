@@ -1,0 +1,249 @@
+#!/bin/bash
+#ut tailat.tmpstorage tailat.greps
+
+# The primary idea of this script is to cut a formatted output log file as needed.
+
+if [ $# -eq 0 ] || [ $# -eq 1 ]
+then
+
+  echo >&2 "Usage: $0 [-h] [-i] [-l|-n N] <STRING> [-E <STRING2>|-Ei <STRING2>|-EL <LINES>] <FILE>"
+  echo >&2 " - Find the first appearance of STRING in FILE,"
+  echo >&2 "   then \"tail\" the file from the next line."
+  echo >&2 " - if <FILE> is set as \"-\", use stdin (pipe output)."
+  echo >&2 " - if -E|-Ei is specified, stop printing when <STRING2> is found. (-Ei for including the <STRING2> line, -E for excluding)"
+  echo >&2 " - if -EL is specified, stop printing after printing the <LINES>-th printable line." 
+  echo >&2
+  echo >&2 "Controlling options:"
+  echo >&2 " - if -h is specified, use \"head\" instead."
+  echo >&2 "   (this option must come before anything else)"
+  echo >&2 " - if -l is specified, use the last appearance,"
+  echo >&2 " - if -n is specified, use the Nth appearance,"
+  echo >&2 "   (0 stands for the last)"
+  echo >&2 " - if -i is specified, include the line of appearance."
+
+else
+
+  usetail=1   # 1=tailat,-1=headat
+  inclap=0    # including the line of apperance (1=true,0=false)
+  posap=-1    # use which apperance (0=last) (default=-1 => 1=first)
+
+  while true
+  do
+    if [ $# -lt 1 ] #Sanity Check
+    then
+      break
+    fi
+
+    case "$1" in
+    -h)
+      usetail=-1
+      shift
+      ;;
+
+    -i)
+      inclap=1
+      shift
+      ;;
+
+    -l)
+      if [ $posap -ne -1 ]
+      then
+        echo >&2 "ERR: Cannot specify multiple -l|-n's."
+        exit 1
+      fi
+      posap=0
+      shift
+      ;;
+
+    -n)
+      isdigit="^[1-9][0-9]*$"
+      if [[ "$2" =~ ${isdigit} ]]
+      then
+        if [ $posap -ne -1 ]
+        then
+          echo >&2 "ERR: Cannot specify multiple -l|-n's."
+          exit 1
+        fi
+        posap=$2
+      else
+        echo >&2  "ERR: $2 is not a valid positive integer."
+        echo >&2  "     try $0 --help for help message."
+        exit 1
+      fi
+      shift
+      shift
+      ;;
+    *)
+      break #Break while loop
+      ;; 
+    esac
+  done
+  if [ $posap -eq -1 ]
+  then
+    posap=1  # default=first
+  fi
+  
+  if [ $# -ne 2 ] && [ $# -ne 4 ]
+  then
+    echo >&2 "ERR: number of option != 2 or 4 (after applying controlling options)"
+    echo >&2 "     try $0 --help for help message."
+    exit 1
+  elif [ $# -eq 4 ]
+  then
+    case $2 in
+    -E)
+      in_fname="$4"
+      in_str="$1"
+      in_str2="$3"
+      inclap2=0
+      in_endtype=1
+      ;;
+    -Ei)
+      in_fname="$4"
+      in_str="$1"
+      in_str2="$3"
+      inclap2=1
+      in_endtype=1
+      ;;
+    -EL)
+      isdigit="^[1-9][0-9]*$"
+      in_fname="$4"
+      in_str="$1"
+      if [[ "$3" =~ ${isdigit} ]]
+      then
+      :
+      else
+        echo >&2  "ERR: $3 is not a valid positive integer."
+        echo >&2  "     try $0 --help for help message."
+        exit 1
+      fi 
+      in_totlines=$3
+      in_endtype=2
+      ;;
+    *)
+      echo >&2 "ERR: unidentified second option after applying controlling options."
+      echo >&2 "     try $0 --help for help message."
+      exit 1
+      ;;
+    esac
+  else
+    in_fname="$2"
+    in_str="$1"
+    in_endtype=0
+  fi
+
+  if [ "${in_fname}" = "-" ]
+  then
+    echo >&2 "Using stdin (pipe output)..."
+    TOGREPFILE=/dev/stdin
+  elif [ ! -f ${in_fname} ]
+  then
+    echo >&2 "ERR: second option (after applying controlling options) is not"
+    echo >&2 "     a file."
+    exit 1
+  else
+    TOGREPFILE=${in_fname}
+  fi
+  
+  GREPSTR="${in_str}"
+  cp ${TOGREPFILE} ${SYSTMP}/.tailat.tmpstorage.$$
+  
+  # for safety...
+  rm -f ${SYSTMP}/.tailat.greps.$$
+  touch ${SYSTMP}/.tailat.greps.$$
+  grep -n "${GREPSTR}" ${SYSTMP}/.tailat.tmpstorage.$$ >> ${SYSTMP}/.tailat.greps.$$
+  
+  if [ ! -s ${SYSTMP}/.tailat.greps.$$ ]
+  then
+    echo >&2 "ERR: the STRING:"
+    echo >&2 "     "
+    echo >&2 "     ${GREPSTR}"
+    echo >&2 "     "
+    echo >&2 "is not found in file ${TOGREPFILE} ."
+    rm -f ${SYSTMP}/.tailat.tmpstorage.$$ ${SYSTMP}/.tailat.greps.$$
+  
+  else
+ 
+    # Find the position of <STRING> 
+    if [ ${posap} -eq 0 ] # the last match (-l)
+    then
+      GREPPOSSTR=`tail -1 ${SYSTMP}/.tailat.greps.$$`
+    else # the n-th match (-n). default n=1
+      GREPSCOUNT=`wc -l ${SYSTMP}/.tailat.greps.$$ | awk '{print $1}'`
+      if [ ${posap} -gt ${GREPSCOUNT} ]
+      then
+        echo >&2 "ERR: the STRING:"
+        echo >&2 "     "
+        echo >&2 "     ${GREPSTR}"
+        echo >&2 "     "
+        echo >&2 "is not found ${posap} times in file ${TOGREPFILE} ."
+        rm -f ${SYSTMP}/.tailat.tmpstorage.$$ ${SYSTMP}/.tailat.greps.$$
+        exit 1
+      fi
+      GREPPOSSTR=`sed -n "${posap}p" ${SYSTMP}/.tailat.greps.$$`
+    fi
+    GREPPOS=${GREPPOSSTR%%:*}
+
+    # Three "pos"es; headat use pos0 and pos1, tailat use pos1 and pos2.
+    ZEROTHPOS='1'
+    FIRSTPOS=$(( GREPPOS + (1-inclap) * (usetail) ))
+    SECONDPOS='$'
+   
+    # Find where to stop
+    if [ ${in_endtype} -eq 2 ] # -EL
+    then
+      ZEROTHPOS=$(( FIRSTPOS - in_totlines + 1 ))
+      SECONDPOS=$(( FIRSTPOS + in_totlines - 1 ))
+      if [ $ZEROTHPOS -lt 1 ] ; then ZEROTHPOS=1 ; fi   # preventing negative numbers
+    elif [ ${in_endtype} -eq 1 ] # -E | -Ei
+    then
+      if [ ${usetail} -eq 1 ] #"tailat", find <STRING2> after GREPPOS
+      then
+        GREPPOS2=$( sed -n "$((GREPPOS+1)),"'$p' ${SYSTMP}/.tailat.tmpstorage.$$ | grep -n "${in_str2}" | head -1 | cut -f1 -d: )
+        if [ -z ${GREPPOS2} ]
+        then
+          echo >&2 "ERR: the STRING:"
+          echo >&2 "     "
+          echo >&2 "     ${in_str2}"
+          echo >&2 "     "
+          echo >&2 "is not found after ${in_str} in file ${TOGREPFILE} ."
+          rm -f ${SYSTMP}/.tailat.tmpstorage.$$ ${SYSTMP}/.tailat.greps.$$
+          exit 1
+        fi
+        SECONDPOS=$((GREPPOS+GREPPOS2-1+inclap2))
+      elif [ ${usetail} -eq -1 ] #"headat", find <STRING2> before GREPPOS
+      then
+        GREPPOS2=$( sed -n "1,$((GREPPOS-1))p" ${SYSTMP}/.tailat.tmpstorage.$$ | grep -n "${in_str2}" | tail -1 | cut -f1 -d: )
+        if [ -z ${GREPPOS2} ]
+        then
+          echo >&2 "ERR: the STRING:"
+          echo >&2 "     "
+          echo >&2 "     ${in_str2}"
+          echo >&2 "     "
+          echo >&2 "is not found before ${in_str} in file ${TOGREPFILE} ."
+          rm -f ${SYSTMP}/.tailat.tmpstorage.$$ ${SYSTMP}/.tailat.greps.$$
+          exit 1
+        fi
+        ZEROTHPOS=$((GREPPOS2+1-inclap2))
+        if [ $ZEROTHPOS -lt 1 ] ; then ZEROTHPOS=1 ; fi   # preventing negative numbers
+      fi
+    fi
+
+    ## # Debug
+    ## echo >&2 $ZEROTHPOS $FIRSTPOS $SECONDPOS
+    
+    # Do the tailat / headat using sed
+    if [ ${usetail} -eq 1 ] #"tailat"
+    then
+      sed -n "${FIRSTPOS},${SECONDPOS}p" ${SYSTMP}/.tailat.tmpstorage.$$
+    elif [ ${usetail} -eq -1 ] #"headat"
+    then
+      sed -n "${ZEROTHPOS},${FIRSTPOS}p" ${SYSTMP}/.tailat.tmpstorage.$$
+    fi
+
+    # Remove temporary files
+    rm -f ${SYSTMP}/.tailat.tmpstorage.$$ ${SYSTMP}/.tailat.greps.$$
+  
+  fi
+
+fi
