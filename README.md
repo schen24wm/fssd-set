@@ -10,14 +10,14 @@ The scripts are tested on CentOS Linux 7.
 
 Software requirements include:
 
-- GNU Bash > 3.0 (Tested on 4.2.46)
-- Python2 > 2.7 (Tested on 2.7.13)
+- GNU Bash >= 3.0 (Tested on 4.2.46)
+- Python2 >= 2.7 (Tested on 2.7.13)
 - External software for force computation (e.g. Quantum Espresso, PW-AFQMC)
 
 Python2 scripts use `numpy` as a dependency.
 
 If using Quantum Espresso to simulate many-body forces (as in the demo),
-- Quantum Espresso > 5.0.1 (Tested on 5.0.1, 6.3 and 6.8)
+- Quantum Espresso >= 5.0.1 (Tested on 5.0.1, 6.3 and 6.8)
 
 # Installation
 
@@ -25,6 +25,7 @@ No actual installation is needed if the software requirement is met, but a few s
 
 - Scripts in `bin-addon/` needs to be added to a directory in `PATH` and be made executable.
 - Set the environment variable `SYSTMP` to an empty directory. This directory will store some (hidden) temporary files of the `bin-addon/` scripts.
+- If running with Quantum Espresso (as in the demo), set the environment variable `QEDIR` to the directory with Quantum Espresso binaries.
 
 The entire process can be done within 5 minutes.
 
