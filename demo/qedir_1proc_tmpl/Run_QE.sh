@@ -106,7 +106,7 @@ then
   grep 'Kohn-Sham Wavefunctions' ${pref}-${suff}.out | awk -F '[\(,\)]' '{printf "%d\n", $3}' >> JOB_SUMMARY
   echo "Plane Wave E_cut: ${ecut}" >> JOB_SUMMARY
   printf "Max number of plane waves: " >> JOB_SUMMARY
-  grep 'Kohn-Sham Wavefunctions' ${pref}-${suff}.out | awk -F '[\(,\)]' '{printf "%d\n", $2}' >> JOB_SUMMARY
+  grep 'bands (ev):' ${pref}-${suff}.out | sed "s/^\(.*\)(\(.*\)PWs)\(.*\)$/\2/g" | awk '$0>x{x=$0};END{print x}' >> JOB_SUMMARY
   echo "Exchange Correlation Functional: ${xc}" >> JOB_SUMMARY
   printf "1-electron trial energy: " >> JOB_SUMMARY
   grep 'one-electron contribution' ${pref}-${suff}.out | tail -1 | awk '{print $(NF-1)}' >> JOB_SUMMARY
