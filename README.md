@@ -4,8 +4,6 @@ A preprint of the paper that describes the algorithm can be found on [arXiv](htt
 
 These scripts are not standalone in themselves. A force computing software is required to generate forces. An additional script may be required to process the output to the specified format.
 
-`SourceData.zip` contains source data for Figures 1-5 in the paper.
-
 # Software Requirements
 
 The scripts are tested on CentOS Linux 7.
